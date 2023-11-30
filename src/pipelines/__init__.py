@@ -1,0 +1,1 @@
+from .vivid123_pipeline import ViVid123Pipeline
