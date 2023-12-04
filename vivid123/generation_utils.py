@@ -1,22 +1,21 @@
 import os
 from typing import List
+import yaml
 
 import torch
 from PIL import Image
 import numpy as np
 import imageio.v3 as imageio
 
+from diffusers.pipelines import DiffusionPipeline
 from diffusers.models import UNet2DConditionModel, AutoencoderKL
-from diffusers.schedulers import DDIMScheduler, DPMSolverMultistepScheduler, EulerDiscreteScheduler
+from diffusers.schedulers import DPMSolverMultistepScheduler, EulerDiscreteScheduler
 from diffusers.pipelines import DiffusionPipeline
 from transformers import CLIPVisionModelWithProjection
-from diffusers.utils import export_to_video
 
-import pydantic_argparse
-
-from models import CLIPCameraProjection
-from pipelines import ViVid123Pipeline
-from configs import ViVid123BaseSchema
+from .models import CLIPCameraProjection
+from .pipelines import ViVid123Pipeline
+from .configs import ViVid123BaseSchema
 
 
 def prepare_cam_pose_input(
@@ -61,11 +60,11 @@ def prepare_cam_pose_input(
 
 # refer to https://stackoverflow.com/a/33507138/6257375
 def conver_rgba_to_rgb_white_bg(
-    image_path: str,
+    image: Image,
     H: int = 256,
     W: int = 256,
 ):
-    input_image = Image.open(image_path).convert("RGBA").resize((H, W), Image.Resampling.BICUBIC)
+    input_image = image.convert("RGBA").resize((H, W), Image.Resampling.BICUBIC)
     background = Image.new("RGBA", input_image.size, (255, 255, 255))
     alpha_composite = Image.alpha_composite(background, input_image)
     
@@ -189,31 +188,45 @@ def save_videos_grid_zeroscope_nplist(video_frames: List[np.ndarray], path: str,
     imageio.imwrite(path, video_frames, fps=fps)
 
 
-if __name__ == "__main__":
-    parser = pydantic_argparse.ArgumentParser(
-        model=ViVid123BaseSchema,
-        prog="ViVid-1-to-3",
-        description="Novel View Synthesis with ViVid-1-to-3",
-        version="0.0.1",
-        epilog="Program Epilog",
-        add_help=True,
-        exit_on_error=True,
-    )
-    cfg = parser.parse_typed_args()
-
-    zero123_unet = UNet2DConditionModel.from_pretrained(cfg.zero123_model_id, subfolder="unet")
-    zero123_cam_proj = CLIPCameraProjection.from_pretrained(cfg.zero123_model_id, subfolder="clip_camera_projection")
-    zero123_img_enc = CLIPVisionModelWithProjection.from_pretrained(cfg.zero123_model_id, subfolder="image_encoder")
+def prepare_pipelines(
+    ZERO123_MODEL_ID: str = "bennyguo/zero123-xl-diffusers",
+    VIDEO_MODEL_ID: str = "cerspense/zeroscope_v2_576w",
+    VIDEO_XL_MODEL_ID: str = "cerspense/zeroscope_v2_XL"
+):
+    zero123_unet = UNet2DConditionModel.from_pretrained(ZERO123_MODEL_ID, subfolder="unet")
+    zero123_cam_proj = CLIPCameraProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="clip_camera_projection")
+    zero123_img_enc = CLIPVisionModelWithProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="image_encoder")
     vivid123_pipe = ViVid123Pipeline.from_pretrained(
-        cfg.video_model_id,
+        VIDEO_MODEL_ID,
         # torch_dtype=torch.float16,
         novel_view_unet=zero123_unet,
         image_encoder=zero123_img_enc,
         cc_projection=zero123_cam_proj,
     )
-    vivid123_pipe.to("cuda")
+    vivid123_pipe.scheduler = DPMSolverMultistepScheduler.from_config(vivid123_pipe.scheduler.config)
+    # vivid123_pipe.to("cuda")
+    vivid123_pipe.enable_model_cpu_offload()
 
-    input_img = conver_rgba_to_rgb_white_bg(cfg.input_image, H=cfg.height, W=cfg.width)
+    xl_pipe = DiffusionPipeline.from_pretrained(VIDEO_XL_MODEL_ID, torch_dtype=torch.float16)
+    xl_pipe.scheduler = DPMSolverMultistepScheduler.from_config(xl_pipe.scheduler.config)
+    # xl_pipe.to("cuda")
+    xl_pipe.enable_model_cpu_offload()
+
+    return vivid123_pipe, xl_pipe
+
+
+def generation_vivid123(
+    vivid123_pipe: ViVid123Pipeline,
+    xl_pipe: DiffusionPipeline,
+    config_path: str,
+    output_root_dir: str,
+):
+    with open(config_path, "r") as f:
+        yaml_loaded = yaml.safe_load(f)
+    cfg = ViVid123BaseSchema.model_validate(yaml_loaded)
+
+    input_image = Image.open(cfg.input_image_path)
+    input_image = conver_rgba_to_rgb_white_bg(input_image, H=cfg.height, W=cfg.width)
 
     cam_pose = prepare_cam_pose_input(
         num_frames=cfg.num_frames,
@@ -237,8 +250,8 @@ if __name__ == "__main__":
         zero123_end_step_percentage=cfg.zero123_end_step_percentage,
     )
 
-    vid_output_frames = vivid123_pipe(
-        image=input_img,
+    vid_base_frames = vivid123_pipe(
+        image=input_image,
         cam_pose_torch=cam_pose,
         fusion_schedule=fusion_schedule,
         height=cfg.height,
@@ -248,12 +261,27 @@ if __name__ == "__main__":
         guidance_scale_video=cfg.guidance_scale_video,
         guidance_scale_zero123=cfg.guidance_scale_zero123,
         num_inference_steps=cfg.num_inference_steps,
+        noise_identical_accross_frames=cfg.noise_identical_accross_frames,
+        eta=cfg.eta,
     ).frames
 
     # save imgs
-    os.makedirs(cfg.output_dir, exist_ok=True)
-    bs = len(vid_output_frames)
-    for i in range(bs):
-        Image.fromarray(vid_output_frames[i]).save(f"{cfg.output_dir}/{i}.png")
+    os.makedirs(os.path.join(output_root_dir, cfg.name), exist_ok=True)
+    input_image.save(f"{output_root_dir}/{cfg.name}/input.png")
+    os.makedirs(os.path.join(output_root_dir, cfg.name, "base_frames"), exist_ok=True)
+    for i in range(len(vid_base_frames)):
+        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.name}/base_frames/{i}.png")
 
-    save_videos_grid_zeroscope_nplist(vid_output_frames, f"{cfg.output_dir}/base.mp4")
+    save_videos_grid_zeroscope_nplist(vid_base_frames, f"{output_root_dir}/{cfg.name}/base.mp4")
+
+
+    video_xl_input = [Image.fromarray(frame).resize((576, 576)) for frame in vid_base_frames]
+
+    video_xl_frames = xl_pipe(
+        prompt=cfg.prompt, video=video_xl_input, strength=cfg.refiner_strength, guidance_scale=cfg.refiner_guidance_scale
+    ).frames
+
+    os.makedirs(os.path.join(output_root_dir, cfg.name, "xl_frames"), exist_ok=True)
+    for i in range(len(vid_base_frames)):
+        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.name}/xl_frames/{i}.png") 
+    save_videos_grid_zeroscope_nplist(video_xl_frames, f"{output_root_dir}/{cfg.name}/xl.mp4")

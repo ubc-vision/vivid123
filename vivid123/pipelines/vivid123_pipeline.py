@@ -35,7 +35,7 @@ from diffusers.utils.torch_utils import randn_tensor
 from diffusers.image_processor import VaeImageProcessor
 from diffusers.pipelines.stable_diffusion.pipeline_stable_diffusion import rescale_noise_cfg
 from transformers import CLIPVisionModelWithProjection, CLIPTextModel, CLIPTokenizer
-from models import CLIPCameraProjection
+from ..models import CLIPCameraProjection
 import kornia
 
 
@@ -185,6 +185,38 @@ class ViVid123Pipeline(TextToVideoSDPipeline):
             raise ValueError(
                 "Fusion schedule length does not match the number of timesteps."
             )
+        
+    def prepare_latents(
+        self, batch_size, num_channels_latents, num_frames, height, width, dtype, device, generator, latents=None, noise_identical_accross_frames=False
+    ):
+        shape = (
+            batch_size,
+            num_channels_latents,
+            num_frames if not noise_identical_accross_frames else 1,
+            height // self.vae_scale_factor,
+            width // self.vae_scale_factor,
+        )
+        if isinstance(generator, list) and len(generator) != batch_size:
+            raise ValueError(
+                f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
+                f" size of {batch_size}. Make sure the batch size matches the length of the generators."
+            )
+
+        if latents is None:
+            latents = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+        else:
+            if latents.shape != shape:
+                raise ValueError(
+                    f"User-prepared `latents` must have shape {shape}, when noise_identical_accross_frames={noise_identical_accross_frames} but got {latents.shape}."
+                )
+            latents = latents.to(device)
+
+        if noise_identical_accross_frames:
+            latents = latents.repeat(1, 1, num_frames, 1, 1)
+        
+        # scale the initial noise by the standard deviation required by the scheduler
+        latents = latents * self.scheduler.init_noise_sigma
+        return latents
 
     def prepare_img_latents(
         self, image, batch_size, dtype, device, generator=None, do_zero123_classifier_free_guidance=False
@@ -408,6 +440,7 @@ class ViVid123Pipeline(TextToVideoSDPipeline):
         fusion_schedule: Optional[tuple[float]] = None,
         ddim_eta_0123: float = 1.0,
         guidance_scale_zero123: float = 3.0,
+        noise_identical_accross_frames: bool = False,
     ):
         r"""
         The call function to the pipeline for generation.
@@ -571,6 +604,7 @@ class ViVid123Pipeline(TextToVideoSDPipeline):
             device,
             generator,
             latents,
+            noise_identical_accross_frames,
         )
 
         # 6. Prepare Zero123 image latents

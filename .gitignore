@@ -1,5 +1,8 @@
 *.pyc
 
+*.npy
 *.png
 *.json
+*.yaml
+*.zip
 *.mp4

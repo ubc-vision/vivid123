@@ -1,8 +1,10 @@
 from pydantic import BaseModel
 
 class ViVid123BaseSchema(BaseModel):
-    zero123_model_id: str = "bennyguo/zero123-xl-diffusers"
-    video_model_id: str = "cerspense/zeroscope_v2_576w"
+    # Disable aliasing underscore to hyphen
+    class Config:
+        alias_generator = lambda string: string
+
     num_frames: int = 25
     delta_elevation_start: float = 0.0
     delta_elevation_end: float = 0.0
@@ -10,12 +12,14 @@ class ViVid123BaseSchema(BaseModel):
     delta_azimuth_end: float = 45.0
     delta_radius_start: float = 0.0
     delta_radius_end: float = 0.0
-    height: int = 256
-    width: int = 256
+    height: int = 320
+    width: int = 320
     # num_videos_per_image_prompt: int = 1  # Only support 1 for running on < 24G memory GPU
     num_inference_steps: int = 50
     guidance_scale_zero123: float = 3.0
     guidance_scale_video: float = 1.0
+    eta: float = 1.0
+    noise_identical_accross_frames: bool = False
     prompt: str = ""
 
     video_linear_start_weight: float = 1.0
@@ -27,5 +31,8 @@ class ViVid123BaseSchema(BaseModel):
     zero123_start_step_percentage: float = 0.0
     zero123_end_step_percentage: float = 1.0
 
-    output_dir: str = "outputs"
-    input_image: str = "assets/squirrel.png"
+    refiner_strength: float = 0.3
+    refiner_guidance_scale: float = 12.0
+
+    name: str = "new_balance_used"
+    input_image_path: str = "tmp/new_balance_used/012.png"
