@@ -12,8 +12,8 @@ class ViVid123BaseSchema(BaseModel):
     delta_azimuth_end: float = 45.0
     delta_radius_start: float = 0.0
     delta_radius_end: float = 0.0
-    height: int = 320
-    width: int = 320
+    height: int = 256
+    width: int = 256
     # num_videos_per_image_prompt: int = 1  # Only support 1 for running on < 24G memory GPU
     num_inference_steps: int = 50
     guidance_scale_zero123: float = 3.0
