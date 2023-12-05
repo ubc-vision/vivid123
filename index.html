@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="description"
+        content="ViVid-1-to-3: Novel View Synthesis with Video Diffusion Models">
+  <meta name="keywords" content="ViViD">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ViVid-1-to-3</title>
+
+  
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./resources/vivid.svg">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+  <!-- <meta http-equiv="refresh" content="0; URL=http://ubc-vision.github.io/vivid123" /> -->
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-2 publication-title"> ViVid-1-to-3:<br> Novel <span class="underline">Vi</span>ew Synthesis with  <span class="underline">Vid</span>eo Diffusion Models </h1>
+          <h3 class="title is-4 publication-title"> Arxiv 2023</h3>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://jgkwak95.github.io/">Jeong-gi Kwak</a><sup>*1,2</sup>,</span>
+            <span class="author-block">
+              <a href="https://deqdon.github.io/">Erqun Dong</a><sup>*1,3,4</sup>,</span>
+            <span class="author-block">
+              <a href="https://scholar.google.ca/citations?user=oAYi1YQAAAAJ&hl=en">Yuhe Jin</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              Hanseok Ko</a><sup>2</sup>,
+            </span>
+            
+            <span class="author-block">
+              <a href="https://s-mahajan.github.io/">Shweta Mahajan</a><sup>1,5</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.cs.ubc.ca/~kmyi/">Kwang Moo Yi</a><sup>1,4</sup>
+            </span>
+            
+          </div>
+
+          <br>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>University of British Columbia, </span>
+            <span class="author-block"><sup>2</sup>Korea University, </span>
+            <span class="author-block"><sup>3</sup>McGill University, </span><br>
+            <span class="author-block"><sup>4</sup>Haiper Ltd., </span>
+            <span class="author-block"><sup>5</sup>Vector Institute for AI</span>
+          </div>
+          <div class="is-size-6 publication-authors">
+           
+            <span class="author-block"><sup>*</sup>Equal contribution</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="http://arxiv.org/abs/2312.01305" 
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href=""
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="columns is-centered has-text-centered">
+  <div class="column is-four-fifths">
+    <!-- <h3 class="title is-3">Overview</h3> -->
+
+      <img src="resources/teaser.jpg"  width="70%" class="center"/>
+      
+
+  </div>
+  </div>
+
+<div class="columns is-centered has-text-centered">
+  <!-- <div class="container is-max-desktop content"> -->
+  <div class="column is-four-fifths">
+
+      <blockquote style="font-size:18px">
+        <h4><em><b>TL;DR:</b>
+          Combining Video diffusion with novel-view synthesis diffusion models increase pose and appearace
+          consistency. <br>
+
+          
+
+        </em></h4>
+      </blockquote>
+  </div>
+</div>
+
+
+<section class="section" id="Abstract">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Generating novel views of an object from a single image is a challenging task. It requires an understanding
+            of the underlying 3D structure of the object from an image and rendering high-quality, spatially consistent
+            new views. While recent methods for view synthesis based on diffusion have shown great progress, achieving
+            consistency among various view estimates and at the same time abiding by the desired camera pose remains a
+            critical problem yet to be solved. In this work, we demonstrate a strikingly simple method, where we utilize
+            a pre-trained video diffusion model to solve this problem. Our key idea is that synthesizing a novel view
+            could be reformulated as synthesizing a video of a camera going around the object of interest---a scanning
+            video---which then allows us to leverage the powerful priors that a video diffusion model would have
+            learned. Thus, to perform novel-view synthesis, we create a smooth camera trajectory to the target view that
+            we wish to render, and denoise using both a view-conditioned diffusion model and a video diffusion model. By
+            doing so, we obtain a highly consistent novel view synthesis, outperforming the state of the art.
+          </p>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
+<div class="columns is-centered has-text-centered">
+  <div class="container is-max-desktop">
+  <!-- <div class="container is-max-desktop content"> -->
+    <div class="hero-body">
+      
+      
+      <h2 class="title"> Animated Novel View Renderings</h2>
+      <p>
+
+
+        <table class="tbl_video">
+          <tr>
+            <td width=33% style="font-size: 21px;"> Input </td>
+            <td width=33% style="font-size: 21px;"> Zero-1-to-3 XL </td>
+            <td width=33% style="font-size: 21px;"> <b>ViVid-1-to-3 (ours)</b> </td>
+           
+            <!-- <td width=300 style="font-size: 18px;"> Input </td>
+            <td width=300 style="font-size: 18px;"> Zero-1-to-3 XL </td>
+            <td width=300 style="font-size: 18px;"> <b>ViVid-1-to-3 (ours)</b> </td>
+            <td width=300 style="font-size: 18px;"> Input </td>
+            <td width=300 style="font-size: 18px;"> Zero-1-to-3 XL </td>
+            <td width=300 style="font-size: 18px;"> <b>ViVid-1-to-3 (ours)</b> </td> -->
+            
+        </tr>
+        
+
+        <tr>
+          <td>
+            <img src="resources/vids/adizero/adizero_gt.png"  width="60%" >
+          </td>
+        <td>
+            <video class="vid_demo" width="60%" preload="auto" playsinline webkit-playsinline loop autoplay
+                muted>
+                <source src="resources/vids/adizero/z123xl.mp4" type="video/mp4">
+            </video>
+        </td>
+        <td>
+            <video class="vid_demo" width="60%" preload="auto" playsinline webkit-playsinline loop autoplay
+                muted>
+                <source src="resources/vids/adizero/vivid123.mp4" type="video/mp4">
+            </video>
+        </td>
+    </tr>
+
+
+
+    <tr>
+      <td>
+        <img src="resources/vids/gt_imgs/loopy_gt.png"  width="50%" >
+      </td>
+    <td>
+        <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+            muted>
+            <source src="resources/vids/loopy/z123xl.mp4" type="video/mp4">
+        </video>
+    </td>
+    <td>
+        <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+            muted>
+            <source src="resources/vids/loopy/vivid123.mp4" type="video/mp4">
+        </video>
+    </td>
+
+  </tr> 
+
+    <tr>
+      <td>
+        <img src="resources/vids/gt_imgs/Shark.png"  width="70%" >
+      </td>
+      <td>
+          <video class="vid_demo" width="70%" preload="auto" playsinline webkit-playsinline loop autoplay
+              muted>
+              <source src="resources/vids/shark/z123xl.mp4" type="video/mp4">
+          </video>
+      </td>
+    
+    
+      <td>
+          <video class="vid_demo" width="70%" preload="auto" playsinline webkit-playsinline loop autoplay
+              muted>
+              <source src="resources/vids/shark/vivid123.mp4" type="video/mp4">
+          </video>
+      </td>
+      </tr>    
+
+
+
+      <tr>
+        <td>
+          <img src="resources/vids/gt_imgs/poro_gt.png"  width="50%" >
+        </td>
+    <td>
+        <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+            muted>
+            <source src="resources/vids/poro/z123xl.mp4" type="video/mp4">
+        </video>
+    </td>
+    <td>
+        <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+            muted>
+            <source src="resources/vids/poro/vivid123.mp4" type="video/mp4">
+        </video>
+    </td>
+  </tr>
+  
+  <tr>
+    <td>
+      <img src="resources/vids/gt_imgs/batduck_gt.png"  width="40%" >
+    </td>
+    <td>
+        <video class="vid_demo" width="40%" preload="auto" playsinline webkit-playsinline loop autoplay
+            muted>
+            <source src="resources/vids/batduck/z123xl.mp4" type="video/mp4">
+        </video>
+    </td>
+    <td>
+        <video class="vid_demo" width="40%" preload="auto" playsinline webkit-playsinline loop autoplay
+            muted>
+            <source src="resources/vids/batduck/vivid123.mp4" type="video/mp4">
+        </video>
+    </td>
+</tr>
+
+
+          <tr>
+            <td>
+              <img src="resources/vids/gt_imgs/clock_gt.png"  width="50%" >
+            </td>
+              <td>
+                
+                  <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+                      muted>
+                      <source src="resources/vids/clock/z123xl.mp4" type="video/mp4">
+                  </video>
+              </td>
+              <td>
+                  <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+                      muted>
+                      <source src="resources/vids/clock/vivid123.mp4" type="video/mp4">
+                  </video>
+              </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <img src="resources/vids/gt_imgs/toytrain_gt.png"  width="60%" >
+                </td>
+                  <td>
+                      <video class="vid_demo" width="60%" preload="auto" playsinline webkit-playsinline loop autoplay
+                          muted>
+                          <source src="resources/vids/toytrain/z123xl.mp4" type="video/mp4">
+                      </video>
+                  </td>
+                  <td>
+                      <video class="vid_demo" width="60%" preload="auto" playsinline webkit-playsinline loop autoplay
+                          muted>
+                          <source src="resources/vids/toytrain/vivid123.mp4" type="video/mp4">
+                      </video>
+                  </td>
+                  </tr>
+
+
+          <tr>
+            <td>
+              <img src="resources/vids/gt_imgs/rockingchair_gt.png"  width="50%" >
+            </td>
+              <td>
+                  <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+                      muted>
+                      <source src="resources/vids/rockingchair/z123xl.mp4" type="video/mp4">
+                  </video>
+              </td>
+              <td>
+                  <video class="vid_demo" width="50%" preload="auto" playsinline webkit-playsinline loop autoplay
+                      muted>
+                      <source src="resources/vids/rockingchair/vivid123.mp4" type="video/mp4">
+                  </video>
+              </td>
+            </tr>
+
+    
+
+
+
+ 
+
+
+      </table>
+    </div>
+  </div>
+</div>
+  
+ 
+    
+       
+
+
+  <div class="columns is-centered has-text-centered">
+    <div class="container is-max-desktop">
+    <!-- <div class="container is-max-desktop content"> -->
+      <div class="hero-body">
+        
+        
+        <h4 class="title"> Text to Novel-view Synthesis</h4>
+        <p>
+  
+    <img src="resources/text_nvs.png"  width="70%" class="center"/>
+    <p></p>
+  </div>
+  </div>
+  </div>
+    <p></p>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>
+      @article{kwak2023vivid,
+      title={{ViVid-1-to-3}: Novel View Synthesis with Video Diffusion Models},
+      author={Kwak, Jeong-gi and Dong, Erqun and Jin, Yuhe and Ko, Hanseok and Mahajan, Shweta and Yi, Kwang Moo},
+      journal={arXiv},
+      year={2023}
+    }
+</code></pre>
+  </div>
+</section>
+
+
+
+<footer class="footer">
+  <div class="container">
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            The template of our project is borrowed from <a href="https://nerfies.github.io/">Nerfies</a>. 
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
