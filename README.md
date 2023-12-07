@@ -34,10 +34,11 @@ TODO: ipython notebook
 ## Citation
 
 If you use this code in your research, please cite our paper:
-
+```
 @article{kwak2023vivid,
   title={ViVid-1-to-3: Novel View Synthesis with Video Diffusion Models},
   author={Kwak, Jeong-gi and Dong, Erqun and Jin, Yuhe and Ko, Hanseok and Mahajan, Shweta and Yi, Kwang Moo},
   journal={arXiv preprint arXiv:2312.01305},
   year={2023}
 }
+```
