@@ -2,8 +2,9 @@
 
 
 ## Run single generation task
+Put the reference image to $IMAGE_PATH, and set the `input_image_path` in `scripts/task_example.yaml` to it.
 ```bash
-python run_generation.py
+python run_generation.py --task_yaml_path=scripts/task_example.yaml
 ```
 
 ## Prepare batch generation config yaml file
