@@ -16,7 +16,7 @@ python run_generation.py --task_yaml_path=scripts/task_example.yaml
 ## Run batch generation tasks
 We have supported running batch generation tasks on both PC and SLURM clusters.
 ### Prepare batch generation config yaml file
-We tested our method on 100 [GSO](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) objects. The list of the objects is in `scripts/gso_metadata_object_prompt_100.csv`, along with our labeled text prompts if you would like to test prompt-based generation yourself. We have rendered the 100 objects beforehand. It can be downloaded [here](https://drive.google.com/file/d/1raD_4k5-T4VCM3tN9XQlgni2hl-oRB0b/view?usp=sharing). Simply run
+We tested our method on 100 [GSO](https://app.gazebosim.org/GoogleResearch/fuel/collections/Scanned%20Objects%20by%20Google%20Research) objects. The list of the objects is in `scripts/gso_metadata_object_prompt_100.csv`, along with our labeled text prompts if you would like to test prompt-based generation yourself. We have rendered the 100 objects beforehand. It can be downloaded [here](https://drive.google.com/file/d/1A9PJDRD27igX5p88slWVF_QSDKxaZDCZ/view?usp=sharing). Simply run
 ```bash
 python -m scripts.job_config_yaml_generation 
 ```
