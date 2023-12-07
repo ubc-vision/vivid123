@@ -1,4 +1,4 @@
-# vivid123
+# ViVid-1-to-3: Novel View Synthesis with Video Diffusion Models
 
 ## Requirements
 ```bash
