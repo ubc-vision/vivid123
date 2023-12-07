@@ -1,7 +1,6 @@
 import os
 import argparse
 import shutil
-import zipfile
 import csv
 
 from vivid123 import generation_vivid123, prepare_pipelines
@@ -11,12 +10,12 @@ ZERO123_MODEL_ID = "bennyguo/zero123-xl-diffusers"
 VIDEO_MODEL_ID = "cerspense/zeroscope_v2_576w"
 VIDEO_XL_MODEL_ID = "cerspense/zeroscope_v2_XL"
 
-SLURM_TMPDIR = os.getenv("SLURM_TMPDIR") if os.getenv("SLURM_TMPDIR") else "/code/tmp"
+SLURM_TMPDIR = os.getenv("SLURM_TMPDIR") if os.getenv("SLURM_TMPDIR") else "./tmp"
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='ViVid123 Generation')
-    parser.add_argument('--configs_dir', type=str, required=True, help='The directory for all configs')
+    parser.add_argument('--task_yamls_dir', type=str, required=True, help='The directory for all configs')
     parser.add_argument('--dataset_dir', type=str, required=True, help='The directory for all groundtruth renderings, each object being a zip file')
     parser.add_argument('--output_dir', type=str, required=True, help='The root directory for all outputs')
     parser.add_argument('--obj_csv_file', type=str, required=True, help='The csv file for all objects')
@@ -38,21 +37,19 @@ if __name__ == "__main__":
             if i > args.run_to_obj_index:
                 break
             
-            print("csv_line:", csv_line)
-            obj = csv_line[0]
-            print(f"Processing {obj}")
-            if os.path.isfile(f"{args.output_dir}/{obj}/xl.mp4"):
+            obj_name = csv_line[0]
+            if os.path.isfile(f"{args.output_dir}/{obj_name}/xl.mp4"):
+                print(f"{obj_name} has already been generated, skipping...")
                 continue
 
-            if not os.path.isfile(f"{SLURM_TMPDIR}/{obj}/012.png"):
-                print(f"unpacking {args.dataset_dir}/{obj}.zip to {SLURM_TMPDIR}/{obj}")
-                shutil.unpack_archive(f"{args.dataset_dir}/{obj}.zip", f"{SLURM_TMPDIR}/{obj}")
-                # with zipfile.ZipFile(f"{args.dataset_dir}/{obj}.zip", 'r') as zip_ref:
-                #     zip_ref.extractall(f"{SLURM_TMPDIR}/{obj}")
+            print(f"Processing {obj_name}")
+            if not os.path.exists(f"{SLURM_TMPDIR}/{obj_name}"):
+                print(f"unpacking {args.dataset_dir}/{obj_name}.zip to {SLURM_TMPDIR}/{obj_name}")
+                shutil.unpack_archive(f"{args.dataset_dir}/{obj_name}.zip", f"{SLURM_TMPDIR}/{obj_name}")
 
             generation_vivid123(
                 vivid123_pipe=vivid123_pipe, 
                 xl_pipe=xl_pipe,
-                config_path=f"{args.configs_dir}/{obj}.yaml",
+                config_path=f"{args.task_yamls_dir}/{obj_name}.yaml",
                 output_root_dir=args.output_dir,
             )

@@ -1,6 +1,8 @@
 import os
-from typing import List
+from typing import List, Any
 import yaml
+from yaml.parser import ParserError
+import re
 
 import torch
 from PIL import Image
@@ -64,7 +66,7 @@ def conver_rgba_to_rgb_white_bg(
     H: int = 256,
     W: int = 256,
 ):
-    input_image = image.convert("RGBA").resize((H, W), Image.Resampling.BICUBIC)
+    input_image = image.convert("RGBA").resize((H, W), Image.BICUBIC)
     background = Image.new("RGBA", input_image.size, (255, 255, 255))
     alpha_composite = Image.alpha_composite(background, input_image)
     
@@ -221,10 +223,29 @@ def generation_vivid123(
     config_path: str,
     output_root_dir: str,
 ):
-    with open(config_path, "r") as f:
-        yaml_loaded = yaml.safe_load(f)
+    # loading yaml config
+    _var_matcher = re.compile(r"\${([^}^{]+)}")
+    _tag_matcher = re.compile(r"[^$]*\${([^}^{]+)}.*")
+
+    def _path_constructor(_loader: Any, node: Any):
+        def replace_fn(match):
+            envparts = f"{match.group(1)}:".split(":")
+            return os.environ.get(envparts[0], envparts[1])
+        return _var_matcher.sub(replace_fn, node.value)
+
+    def load_yaml(filename: str) -> dict:
+        yaml.add_implicit_resolver("!envvar", _tag_matcher, None, yaml.SafeLoader)
+        yaml.add_constructor("!envvar", _path_constructor, yaml.SafeLoader)
+        try:
+            with open(filename, "r") as f:
+                return yaml.safe_load(f.read())
+        except (FileNotFoundError, PermissionError, ParserError):
+            return dict()
+
+    yaml_loaded = load_yaml(config_path)
     cfg = ViVid123BaseSchema.model_validate(yaml_loaded)
 
+    # get reference image
     input_image = Image.open(cfg.input_image_path)
     input_image = conver_rgba_to_rgb_white_bg(input_image, H=cfg.height, W=cfg.width)
 
