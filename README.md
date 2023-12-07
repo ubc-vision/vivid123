@@ -22,7 +22,11 @@ We tested our method on 100 [GSO](https://app.gazebosim.org/GoogleResearch/fuel/
 ```bash
 python -m scripts.job_config_yaml_generation 
 ```
-This will put all the yaml files in a new folder called `tasks-gso`.
+to run on a PC, or
+```
+python -m scripts.job_config_yaml_generation --run_on_slurm:w
+```
+to run on a SLURM cluster. This will put all the yaml files in a new folder called `tasks_gso`.
 
 ### Batch generation
 ```bash
