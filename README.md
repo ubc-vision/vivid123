@@ -1,5 +1,7 @@
 # ViVid-1-to-3: Novel View Synthesis with Video Diffusion Models
 
+This repository is a reference implementation for ViVid-1-to-3. It combines video diffusion with novel-view synthesis diffusion models for increased pose and appearace consistency.
+
 ## Requirements
 ```bash
 pip install torch "diffusers>0.23" transformers accelerate einops kornia imageio[ffmpeg] opencv pydantic
