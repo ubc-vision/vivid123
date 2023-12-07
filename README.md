@@ -24,7 +24,7 @@ python -m scripts.job_config_yaml_generation
 ```
 to run on a PC, or
 ```
-python -m scripts.job_config_yaml_generation --run_on_slurm:w
+python -m scripts.job_config_yaml_generation --run_on_slurm
 ```
 to run on a SLURM cluster. This will put all the yaml files in a new folder called `tasks_gso`.
 
