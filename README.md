@@ -30,12 +30,15 @@ to run on a SLURM cluster. This will put all the yaml files in a new folder call
 
 ### Batch generation
 ```bash
-CUDA_VISIBLE_DEVICES=0 python run_batch_generation.py --task_yamls_dir=tasks-gso --dataset_dir=gso-100 --output_dir=outputs --obj_csv_file=scripts/gso_metadata_object_prompt_100.csv --run_from_obj_index=0 --run_to_obj_index=50
+python run_batch_generation.py --task_yamls_dir=tasks_gso --dataset_dir=gso-100 --output_dir=outputs --obj_csv_file=scripts/gso_metadata_object_prompt_100.csv
 ```
 
 ### Tips for scheduling batch generation on SLURM clusters
 It takes about 1min30s to run one generation on a v100 gpu. If the number of generations is too large for each job you can schedule on a SLURM cluster, 
-you can split the dataset for each job using the `--run_from_obj_index` and `--run_to_obj_index` options.
+you can split the dataset for each job using the `--run_from_obj_index` and `--run_to_obj_index` options. For example
+```bash
+python run_batch_generation.py --task_yamls_dir=tasks_gso --dataset_dir=gso-100 --output_dir=outputs --obj_csv_file=scripts/gso_metadata_object_prompt_100.csv --run_from_obj_index=0 --run_to_obj_index=50
+```
 
 ## TODO
 - [ ] Evaluation code
