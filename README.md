@@ -32,7 +32,6 @@ It takes about 1min30s to run one generation on a v100 gpu. If the number of gen
 you can split the dataset for each job using the `--run_from_obj_index` and `--run_to_obj_index` options.
 
 ## TODO
-- [ ] Dataset
 - [ ] Evaluation code
 - [ ] iPython notebook
 
