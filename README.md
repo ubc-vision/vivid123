@@ -22,7 +22,7 @@ We tested our method on 100 [GSO](https://app.gazebosim.org/GoogleResearch/fuel/
 ```bash
 python -m scripts.job_config_yaml_generation 
 ```
-This will put all the yaml files in the `tasks-gso` folder.
+This will put all the yaml files in a new folder called `tasks-gso`.
 
 ### Batch generation
 ```bash
