@@ -45,7 +45,7 @@ python run_batch_generation.py --task_yamls_dir=tasks_gso --dataset_dir=gso-100 
 - [ ] iPython notebook
 
 ## Acknowledgement
-This repo is based on the Huggingface community [implementation](https://huggingface.co/bennyguo/zero123-xl-diffusers) of [Zero-1-to-3](https://github.com/cvlab-columbia/zero123), as well as the Huggingface community text-to-video model [Zeroscope](https://huggingface.co/cerspense/zeroscope_v2_576w). Thanks for their awesome works.
+This repo is based on the Huggingface community [implementation](https://huggingface.co/bennyguo/zero123-xl-diffusers) of [Zero-1-to-3](https://github.com/cvlab-columbia/zero123), as well as the Huggingface community text-to-video model [Zeroscope v2](https://huggingface.co/cerspense/zeroscope_v2_576w). Thanks for their awesome works.
 
 ## Citation
 
