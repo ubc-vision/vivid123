@@ -1,1 +1,2 @@
 from .vivid123_pipeline import ViVid123Pipeline
+from .zero123_pipeline import Zero1to3StableDiffusionPipeline

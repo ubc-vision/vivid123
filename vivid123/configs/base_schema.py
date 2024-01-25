@@ -31,6 +31,7 @@ class ViVid123BaseSchema(BaseModel):
     zero123_start_step_percentage: float = 0.0
     zero123_end_step_percentage: float = 1.0
 
+    skip_refiner: bool = False
     refiner_strength: float = 0.3
     refiner_guidance_scale: float = 12.0
 

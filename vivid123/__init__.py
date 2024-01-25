@@ -2,4 +2,4 @@ from .configs import *
 from .models import *
 from .pipelines import *
 
-from .generation_utils import generation_vivid123, prepare_pipelines
+from .generation_utils import generation_vivid123, prepare_vivid123_pipeline

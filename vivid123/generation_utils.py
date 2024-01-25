@@ -11,13 +11,16 @@ import imageio.v3 as imageio
 
 from diffusers.pipelines import DiffusionPipeline
 from diffusers.models import UNet2DConditionModel, AutoencoderKL
-from diffusers.schedulers import DPMSolverMultistepScheduler, EulerDiscreteScheduler
+from diffusers.schedulers import DDIMScheduler, DPMSolverMultistepScheduler, EulerDiscreteScheduler
 from diffusers.pipelines import DiffusionPipeline
 from transformers import CLIPVisionModelWithProjection
 
 from .models import CLIPCameraProjection
-from .pipelines import ViVid123Pipeline
+from .pipelines import ViVid123Pipeline, Zero1to3StableDiffusionPipeline
 from .configs import ViVid123BaseSchema
+
+
+XDG_CACHE_HOME = os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
 
 
 def prepare_cam_pose_input(
@@ -31,7 +34,6 @@ def prepare_cam_pose_input(
 ):
     r"""
     The function to prepare the input to the vivid123 pipeline
-
     Args:
         delta_elevation_start (`float`, *optional*, defaults to 0.0):
             The starting relative elevation angle of the camera, in degree. Relative to the elevation of the reference image.
@@ -47,7 +49,6 @@ def prepare_cam_pose_input(
             The camera is facing towards the origin.
     
     Returns:
-
     """
     cam_elevation = np.radians(np.linspace(delta_elevation_start, delta_elevation_end, num_frames))[..., None]
     cam_azimuth = np.radians(np.linspace(delta_azimuth_start, delta_azimuth_end, num_frames))
@@ -69,7 +70,7 @@ def conver_rgba_to_rgb_white_bg(
     input_image = image.convert("RGBA").resize((H, W), Image.BICUBIC)
     background = Image.new("RGBA", input_image.size, (255, 255, 255))
     alpha_composite = Image.alpha_composite(background, input_image)
-    
+
     return alpha_composite
 
 
@@ -86,7 +87,6 @@ def prepare_fusion_schedule_linear(
 ):
     """
     Prepare the fusion schedule of video diffusion and zero123 at all the denoising steps
-
     Args:
         video_linear_start_weight (`float`, *optional*, defaults to 1.0):
             The weight of the video diffusion at the start of the video. The weight is linearly increased from
@@ -176,7 +176,7 @@ def prepare_fusion_schedule_linear(
                 * torch.ones([num_inference_steps - zero123_end_step_percentage * num_inference_steps]),
             ]
         )
-    
+
     return (video_schedule, zero123_schedule)
 
 
@@ -185,33 +185,32 @@ def save_videos_grid_zeroscope_nplist(video_frames: List[np.ndarray], path: str,
     f = len(video_frames)
     h, w, c = video_frames[0].shape
     #images = [(image).astype("uint8") for image in video_frames]
-    
+
     os.makedirs(os.path.dirname(path), exist_ok=True)
     imageio.imwrite(path, video_frames, fps=fps)
 
 
-def prepare_pipelines(
+def prepare_vivid123_pipeline(
     ZERO123_MODEL_ID: str = "bennyguo/zero123-xl-diffusers",
     VIDEO_MODEL_ID: str = "cerspense/zeroscope_v2_576w",
     VIDEO_XL_MODEL_ID: str = "cerspense/zeroscope_v2_XL"
 ):
-    zero123_unet = UNet2DConditionModel.from_pretrained(ZERO123_MODEL_ID, subfolder="unet")
-    zero123_cam_proj = CLIPCameraProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="clip_camera_projection")
-    zero123_img_enc = CLIPVisionModelWithProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="image_encoder")
+    zero123_unet = UNet2DConditionModel.from_pretrained(ZERO123_MODEL_ID, subfolder="unet", cache_dir=XDG_CACHE_HOME)
+    zero123_cam_proj = CLIPCameraProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="clip_camera_projection", cache_dir=XDG_CACHE_HOME)
+    zero123_img_enc = CLIPVisionModelWithProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="image_encoder", cache_dir=XDG_CACHE_HOME)
     vivid123_pipe = ViVid123Pipeline.from_pretrained(
         VIDEO_MODEL_ID,
-        # torch_dtype=torch.float16,
+        cache_dir=XDG_CACHE_HOME,
         novel_view_unet=zero123_unet,
         image_encoder=zero123_img_enc,
         cc_projection=zero123_cam_proj,
+        # torch_dtype=torch.float16,
     )
-    vivid123_pipe.scheduler = DPMSolverMultistepScheduler.from_config(vivid123_pipe.scheduler.config)
-    # vivid123_pipe.to("cuda")
+    vivid123_pipe.scheduler = DPMSolverMultistepScheduler.from_config(vivid123_pipe.scheduler.config, cache_dir=XDG_CACHE_HOME)
     vivid123_pipe.enable_model_cpu_offload()
 
-    xl_pipe = DiffusionPipeline.from_pretrained(VIDEO_XL_MODEL_ID, torch_dtype=torch.float16)
-    xl_pipe.scheduler = DPMSolverMultistepScheduler.from_config(xl_pipe.scheduler.config)
-    # xl_pipe.to("cuda")
+    xl_pipe = DiffusionPipeline.from_pretrained(VIDEO_XL_MODEL_ID, torch_dtype=torch.float16, cache_dir=XDG_CACHE_HOME)
+    xl_pipe.scheduler = DPMSolverMultistepScheduler.from_config(xl_pipe.scheduler.config, cache_dir=XDG_CACHE_HOME)
     xl_pipe.enable_model_cpu_offload()
 
     return vivid123_pipe, xl_pipe
@@ -221,7 +220,7 @@ def generation_vivid123(
     vivid123_pipe: ViVid123Pipeline,
     xl_pipe: DiffusionPipeline,
     config_path: str,
-    output_root_dir: str,
+    output_root_dir: str = "./outputs",
 ):
     # loading yaml config
     _var_matcher = re.compile(r"\${([^}^{]+)}")
@@ -295,6 +294,8 @@ def generation_vivid123(
 
     save_videos_grid_zeroscope_nplist(vid_base_frames, f"{output_root_dir}/{cfg.name}/base.mp4")
 
+    if cfg.skip_refiner:
+        return
 
     video_xl_input = [Image.fromarray(frame).resize((576, 576)) for frame in vid_base_frames]
 
@@ -306,3 +307,30 @@ def generation_vivid123(
     for i in range(len(vid_base_frames)):
         Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.name}/xl_frames/{i}.png") 
     save_videos_grid_zeroscope_nplist(video_xl_frames, f"{output_root_dir}/{cfg.name}/xl.mp4")
+
+
+def prepare_zero123_pipeline(
+    ZERO123_MODEL_ID: str = "bennyguo/zero123-xl-diffusers",
+    VIDEO_XL_MODEL_ID: str = "cerspense/zeroscope_v2_XL"
+):
+    zero123_unet = UNet2DConditionModel.from_pretrained(ZERO123_MODEL_ID, subfolder="unet", cache_dir=XDG_CACHE_HOME)
+    zero123_cam_proj = CLIPCameraProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="clip_camera_projection", cache_dir=XDG_CACHE_HOME)
+    zero123_img_enc = CLIPVisionModelWithProjection.from_pretrained(ZERO123_MODEL_ID, subfolder="image_encoder", cache_dir=XDG_CACHE_HOME)
+    vae = AutoencoderKL.from_pretrained(ZERO123_MODEL_ID, subfolder="vae", cache_dir=XDG_CACHE_HOME)
+    scheduler = DDIMScheduler.from_pretrained(ZERO123_MODEL_ID, subfolder="scheduler", cache_dir=XDG_CACHE_HOME)
+    zero123_pipe = Zero1to3StableDiffusionPipeline(
+        vae=vae,
+        image_encoder=zero123_img_enc,
+        unet=zero123_unet,
+        scheduler=scheduler,
+        cc_projection=zero123_cam_proj,
+        requires_safety_checker=False,
+        safety_checker=None,
+        feature_extractor=None,
+    )
+
+    xl_pipe = DiffusionPipeline.from_pretrained(VIDEO_XL_MODEL_ID, torch_dtype=torch.float16, cache_dir=XDG_CACHE_HOME)
+    xl_pipe.scheduler = DPMSolverMultistepScheduler.from_config(xl_pipe.scheduler.config, cache_dir=XDG_CACHE_HOME)
+    xl_pipe.enable_model_cpu_offload()
+
+    return zero123_pipe, xl_pipe

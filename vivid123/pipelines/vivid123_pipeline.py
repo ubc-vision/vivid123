@@ -700,8 +700,7 @@ class ViVid123Pipeline(TextToVideoSDPipeline):
             video = tensor2vid(video_tensor)
 
         # Offload last model to CPU
-        if hasattr(self, "final_offload_hook") and self.final_offload_hook is not None:
-            self.final_offload_hook.offload()
+        self.maybe_free_model_hooks()
 
         if not return_dict:
             return (video,)
