@@ -289,7 +289,7 @@ def generation_vivid123(
     input_image.save(f"{output_root_dir}/{cfg.obj_name}/input.png")
     os.makedirs(os.path.join(output_root_dir, cfg.obj_name, "base_frames"), exist_ok=True)
     for i in range(len(vid_base_frames)):
-        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/base_frames/{i}.png")
+        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/base_frames/{str(i).zfill(3)}.png")
 
     save_videos_grid_zeroscope_nplist(vid_base_frames, f"{output_root_dir}/{cfg.obj_name}/base.mp4")
 
@@ -304,7 +304,7 @@ def generation_vivid123(
 
     os.makedirs(os.path.join(output_root_dir, cfg.obj_name, "xl_frames"), exist_ok=True)
     for i in range(len(vid_base_frames)):
-        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/xl_frames/{i}.png") 
+        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/xl_frames/{str(i).zfill(3)}.png") 
     save_videos_grid_zeroscope_nplist(video_xl_frames, f"{output_root_dir}/{cfg.obj_name}/xl.mp4")
 
 
