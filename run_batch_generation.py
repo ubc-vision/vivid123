@@ -3,7 +3,7 @@ import argparse
 import shutil
 import csv
 
-from vivid123 import generation_vivid123, prepare_pipelines
+from vivid123 import generation_vivid123, prepare_vivid123_pipeline
 
 
 ZERO123_MODEL_ID = "bennyguo/zero123-xl-diffusers"
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument('--run_to_obj_index', type=int, default=999, help='The index of object to end with')
     args = parser.parse_args()
     
-    vivid123_pipe, xl_pipe = prepare_pipelines(
+    vivid123_pipe, xl_pipe = prepare_vivid123_pipeline(
         ZERO123_MODEL_ID=ZERO123_MODEL_ID, 
         VIDEO_MODEL_ID=VIDEO_MODEL_ID, 
         VIDEO_XL_MODEL_ID=VIDEO_XL_MODEL_ID

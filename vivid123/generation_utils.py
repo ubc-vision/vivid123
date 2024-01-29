@@ -235,16 +235,15 @@ def generation_vivid123(
     def load_yaml(filename: str) -> dict:
         yaml.add_implicit_resolver("!envvar", _tag_matcher, None, yaml.SafeLoader)
         yaml.add_constructor("!envvar", _path_constructor, yaml.SafeLoader)
-        try:
-            with open(filename, "r") as f:
-                return yaml.safe_load(f.read())
-        except (FileNotFoundError, PermissionError, ParserError):
-            return dict()
+        with open(filename, "r") as f:
+            return yaml.safe_load(f.read())
 
     yaml_loaded = load_yaml(config_path)
+    print(f"input_image_path is: ", yaml_loaded["input_image_path"])
     cfg = ViVid123BaseSchema.model_validate(yaml_loaded)
 
     # get reference image
+    print(f"input_image_path is: {cfg.input_image_path}")
     input_image = Image.open(cfg.input_image_path)
     input_image = conver_rgba_to_rgb_white_bg(input_image, H=cfg.height, W=cfg.width)
 
@@ -286,13 +285,13 @@ def generation_vivid123(
     ).frames
 
     # save imgs
-    os.makedirs(os.path.join(output_root_dir, cfg.name), exist_ok=True)
-    input_image.save(f"{output_root_dir}/{cfg.name}/input.png")
-    os.makedirs(os.path.join(output_root_dir, cfg.name, "base_frames"), exist_ok=True)
+    os.makedirs(os.path.join(output_root_dir, cfg.obj_name), exist_ok=True)
+    input_image.save(f"{output_root_dir}/{cfg.obj_name}/input.png")
+    os.makedirs(os.path.join(output_root_dir, cfg.obj_name, "base_frames"), exist_ok=True)
     for i in range(len(vid_base_frames)):
-        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.name}/base_frames/{i}.png")
+        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/base_frames/{i}.png")
 
-    save_videos_grid_zeroscope_nplist(vid_base_frames, f"{output_root_dir}/{cfg.name}/base.mp4")
+    save_videos_grid_zeroscope_nplist(vid_base_frames, f"{output_root_dir}/{cfg.obj_name}/base.mp4")
 
     if cfg.skip_refiner:
         return
@@ -303,10 +302,10 @@ def generation_vivid123(
         prompt=cfg.prompt, video=video_xl_input, strength=cfg.refiner_strength, guidance_scale=cfg.refiner_guidance_scale
     ).frames
 
-    os.makedirs(os.path.join(output_root_dir, cfg.name, "xl_frames"), exist_ok=True)
+    os.makedirs(os.path.join(output_root_dir, cfg.obj_name, "xl_frames"), exist_ok=True)
     for i in range(len(vid_base_frames)):
-        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.name}/xl_frames/{i}.png") 
-    save_videos_grid_zeroscope_nplist(video_xl_frames, f"{output_root_dir}/{cfg.name}/xl.mp4")
+        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/xl_frames/{i}.png") 
+    save_videos_grid_zeroscope_nplist(video_xl_frames, f"{output_root_dir}/{cfg.obj_name}/xl.mp4")
 
 
 def prepare_zero123_pipeline(

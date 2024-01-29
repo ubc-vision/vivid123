@@ -18,7 +18,7 @@ class ViVid123BaseSchema(BaseModel):
     num_inference_steps: int = 50
     guidance_scale_zero123: float = 3.0
     guidance_scale_video: float = 1.0
-    eta: float = 1.0
+    eta: float = 0.0  # 0.0 for purely deterministic, 1.0 for purely stochastic
     noise_identical_accross_frames: bool = False
     prompt: str = ""
 
@@ -35,5 +35,6 @@ class ViVid123BaseSchema(BaseModel):
     refiner_strength: float = 0.3
     refiner_guidance_scale: float = 12.0
 
-    name: str = "new_balance_used"
+    obj_name: str = "new_balance_used"
     input_image_path: str = "tmp/new_balance_used/012.png"
+    exp_name: str = "test_exp"
