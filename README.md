@@ -6,7 +6,7 @@ This repository is a reference implementation for ViVid-1-to-3. It combines vide
 
 ## Requirements
 ```bash
-pip install torch "diffusers>0.23" transformers accelerate einops kornia imageio[ffmpeg] opencv-python pydantic
+pip install torch "diffusers>0.23" transformers accelerate einops kornia imageio[ffmpeg] opencv-python pydantic scikit-image lpips
 ```
 
 ## Run single generation task
