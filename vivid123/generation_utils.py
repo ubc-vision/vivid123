@@ -300,12 +300,14 @@ def generation_vivid123(
 
     video_xl_frames = xl_pipe(
         prompt=cfg.prompt, video=video_xl_input, strength=cfg.refiner_strength, guidance_scale=cfg.refiner_guidance_scale
-    ).frames
+    ).frames.squeeze()
+    
+    video_xl_frames_uint8 = np.clip(video_xl_frames * 255, 0, 255).astype(np.uint8)
 
     os.makedirs(os.path.join(output_root_dir, cfg.obj_name, "xl_frames"), exist_ok=True)
-    for i in range(len(vid_base_frames)):
-        Image.fromarray(vid_base_frames[i]).save(f"{output_root_dir}/{cfg.obj_name}/xl_frames/{str(i).zfill(3)}.png") 
-    save_videos_grid_zeroscope_nplist(video_xl_frames, f"{output_root_dir}/{cfg.obj_name}/xl.mp4")
+    for i, frame_uint8 in enumerate(video_xl_frames_uint8):
+        Image.fromarray(frame_uint8).save(f"{output_root_dir}/{cfg.obj_name}/xl_frames/{str(i).zfill(3)}.png") 
+    save_videos_grid_zeroscope_nplist(video_xl_frames_uint8, f"{output_root_dir}/{cfg.obj_name}/xl.mp4")
 
 
 def prepare_zero123_pipeline(
