@@ -66,10 +66,11 @@ This repo is based on the Huggingface community [implementation](https://github.
 
 If you use this code in your research, please cite our paper:
 ```
-@article{kwak2023vivid,
-  title={ViVid-1-to-3: Novel View Synthesis with Video Diffusion Models},
+@inproceedings{kwak2024vivid,
+  title={Vivid-1-to-3: Novel view synthesis with video diffusion models},
   author={Kwak, Jeong-gi and Dong, Erqun and Jin, Yuhe and Ko, Hanseok and Mahajan, Shweta and Yi, Kwang Moo},
-  journal={arXiv preprint arXiv:2312.01305},
-  year={2023}
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={6775--6785},
+  year={2024}
 }
 ```
